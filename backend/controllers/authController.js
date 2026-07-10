@@ -11,6 +11,7 @@ const formatUser = (user) => ({
   district: user.district,
   village: user.village,
   profilePicture: user.profilePicture,
+  role: user.role,
 });
 
 // @route POST /api/auth/register
@@ -61,6 +62,41 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
+// @route POST /api/auth/admin-login
+const adminLogin = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+
+  const validUsername = process.env.ADMIN_USERNAME || 'admin';
+  const validPassword = process.env.ADMIN_PASSWORD || 'admin';
+
+  if (username !== validUsername || password !== validPassword) {
+    res.status(401);
+    throw new Error('Invalid admin credentials');
+  }
+
+  const adminIdentifier = 'admin@agriworld.local';
+  let adminUser = await User.findOne({ email: adminIdentifier });
+
+  if (!adminUser) {
+    adminUser = await User.create({
+      name: 'Administrator',
+      email: adminIdentifier,
+      password: `${validUsername}-${validPassword}-${Date.now()}`,
+      mobile: '0000000000',
+      state: 'N/A',
+      district: 'N/A',
+      village: 'N/A',
+      role: 'admin',
+    });
+  }
+
+  res.json({
+    success: true,
+    token: generateToken(adminUser._id),
+    user: formatUser(adminUser),
+  });
+});
+
 // @route GET /api/auth/me
 const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, user: formatUser(req.user) });
@@ -81,4 +117,4 @@ const updateMe = asyncHandler(async (req, res) => {
   res.json({ success: true, user: formatUser(req.user) });
 });
 
-module.exports = { register, login, getMe, updateMe };
+module.exports = { register, login, adminLogin, getMe, updateMe };

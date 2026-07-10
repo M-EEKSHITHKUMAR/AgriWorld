@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, X } from 'lucide-react';
 import { CROP_WORK_TYPES } from '../../utils/statesData';
@@ -8,10 +9,20 @@ const CropWorkForm = ({ onSubmit, onClose, submitting }) => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({ defaultValues: { status: 'Planned' } });
 
   const workName = watch('workName');
+  const status = watch('status');
+  const isCompleted = status === 'Completed';
+
+  useEffect(() => {
+    if (isCompleted) {
+      setValue('reminderDate', '');
+      setValue('reminderTime', '');
+    }
+  }, [isCompleted, setValue]);
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -71,16 +82,18 @@ const CropWorkForm = ({ onSubmit, onClose, submitting }) => {
             <textarea rows={2} className="input-field" {...register('notes')} />
           </div>
 
-          <div className="p-4 rounded-xl bg-primary-50/60 space-y-3">
-            <p className="text-sm font-semibold text-gray-700">Schedule Reminder (Optional)</p>
+          <div className={`p-4 rounded-xl space-y-3 ${isCompleted ? 'bg-gray-50' : 'bg-primary-50/60'}`}>
+            <p className="text-sm font-semibold text-gray-700">
+              Schedule Reminder {isCompleted ? '(Not applicable for completed work)' : '(Optional)'}
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label-text">Reminder Date</label>
-                <input type="date" className="input-field" {...register('reminderDate')} />
+                <input type="date" disabled={isCompleted} className="input-field disabled:opacity-50 disabled:cursor-not-allowed" {...register('reminderDate')} />
               </div>
               <div>
                 <label className="label-text">Reminder Time (Optional)</label>
-                <input type="time" className="input-field" {...register('reminderTime')} />
+                <input type="time" disabled={isCompleted} className="input-field disabled:opacity-50 disabled:cursor-not-allowed" {...register('reminderTime')} />
               </div>
             </div>
           </div>

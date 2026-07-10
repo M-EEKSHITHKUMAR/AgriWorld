@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     district: { type: String, required: true },
     village: { type: String, required: true },
     profilePicture: { type: String, default: '' },
+    role: { type: String, enum: ['farmer', 'admin'], default: 'farmer' },
   },
   { timestamps: true }
 );

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Landmark } from 'lucide-react';
-import { getSchemes } from '../services/schemeService';
+import { Landmark, Plus } from 'lucide-react';
+import { getSchemes, createScheme } from '../services/schemeService';
 import { useAuth } from '../context/AuthContext';
 import SchemeCard from '../components/schemes/SchemeCard';
+import SchemeForm from '../components/schemes/SchemeForm';
 import { CardSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
 import { INDIAN_STATES } from '../utils/statesData';
@@ -13,21 +14,39 @@ const GovernmentSchemes = () => {
   const [selectedState, setSelectedState] = useState(user?.state || '');
   const [schemes, setSchemes] = useState({ central: [], state: [] });
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await getSchemes(selectedState);
+      setSchemes(data);
+    } catch {
+      toast.error('Failed to load government schemes');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const data = await getSchemes(selectedState);
-        setSchemes(data);
-      } catch {
-        toast.error('Failed to load government schemes');
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedState]);
+
+  const handleCreate = async (payload) => {
+    setSubmitting(true);
+    try {
+      await createScheme(payload);
+      toast.success('Scheme published');
+      setShowForm(false);
+      await load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to publish scheme');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -36,14 +55,21 @@ const GovernmentSchemes = () => {
           <h1 className="text-2xl font-bold text-gray-800">Government Schemes</h1>
           <p className="text-gray-500 mt-1">Discover central and state schemes designed for farmers.</p>
         </div>
-        <select
-          className="input-field sm:w-56"
-          value={selectedState}
-          onChange={(e) => setSelectedState(e.target.value)}
-        >
-          <option value="">View state schemes for...</option>
-          {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <select
+            className="input-field sm:w-56"
+            value={selectedState}
+            onChange={(e) => setSelectedState(e.target.value)}
+          >
+            <option value="">View state schemes for...</option>
+            {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {user?.role === 'admin' && (
+            <button onClick={() => setShowForm(true)} className="btn-primary whitespace-nowrap">
+              <Plus className="w-4 h-4" /> Add Scheme
+            </button>
+          )}
+        </div>
       </div>
 
       <section>
@@ -77,6 +103,10 @@ const GovernmentSchemes = () => {
           <EmptyState icon={Landmark} title="No state schemes yet" description={`No schemes found for ${selectedState} at the moment.`} />
         )}
       </section>
+
+      {showForm && (
+        <SchemeForm onSubmit={handleCreate} onClose={() => setShowForm(false)} submitting={submitting} />
+      )}
     </div>
   );
 };

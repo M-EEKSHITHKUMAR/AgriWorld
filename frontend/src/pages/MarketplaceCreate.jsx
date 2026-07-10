@@ -15,9 +15,12 @@ const MarketplaceCreate = () => {
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { priceUnit: 'Day', availabilityStatus: 'Available' } });
 
+  const { onChange: registerImagesOnChange, ...imagesField } = register('images');
+
   const handleImages = (e) => {
     const files = Array.from(e.target.files || []);
     setPreviews(files.map((f) => URL.createObjectURL(f)));
+    registerImagesOnChange(e);
   };
 
   const onSubmit = async (data) => {
@@ -58,7 +61,7 @@ const MarketplaceCreate = () => {
             <div className="w-20 h-20 rounded-xl border-2 border-dashed border-primary-200 flex items-center justify-center">
               <Upload className="w-5 h-5 text-primary-400" />
             </div>
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImages} {...register('images')} />
+            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImages} {...imagesField} />
           </label>
         </div>
 

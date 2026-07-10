@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { loginUser, registerUser, getCurrentUser, updateProfile } from '../services/authService';
+import { loginUser, adminLoginUser, registerUser, getCurrentUser, updateProfile } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -40,6 +40,12 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  const adminLogin = async (credentials) => {
+    const { token, user: userData } = await adminLoginUser(credentials);
+    persistSession(token, userData);
+    return userData;
+  };
+
   const register = async (formData) => {
     const { token, user: userData } = await registerUser(formData);
     persistSession(token, userData);
@@ -60,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, adminLogin, register, logout, refreshProfile, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
