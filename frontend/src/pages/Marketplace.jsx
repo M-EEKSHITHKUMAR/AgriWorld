@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Plus, Search, Store } from 'lucide-react';
-import { getListings } from '../services/marketplaceService';
+import { getListings, deleteListing } from '../services/marketplaceService';
+import { useAuth } from '../context/AuthContext';
 import ListingCard from '../components/marketplace/ListingCard';
 import { CardSkeleton } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
@@ -31,10 +32,25 @@ const Marketplace = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { user } = useAuth();
+
   const handleFilterChange = (key, value) => {
     const updated = { ...filters, [key]: value };
     setFilters(updated);
     loadListings(updated);
+  };
+
+  const handleDelete = async (id) => {
+    const confirmed = window.confirm('Are you sure you want to delete this listing?');
+    if (!confirmed) return;
+
+    try {
+      await deleteListing(id);
+      setListings((prev) => prev.filter((listing) => listing._id !== id));
+      toast.success('Listing deleted successfully');
+    } catch {
+      toast.error('Failed to delete listing');
+    }
   };
 
   return (
@@ -84,7 +100,14 @@ const Marketplace = () => {
         </div>
       ) : listings.length ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {listings.map((listing) => <ListingCard key={listing._id} listing={listing} />)}
+          {listings.map((listing) => (
+            <ListingCard
+              key={listing._id}
+              listing={listing}
+              isOwner={Boolean(user && listing.owner && String(user._id) === String(listing.owner._id))}
+              onDelete={handleDelete}
+            />
+          ))}
         </div>
       ) : (
         <EmptyState

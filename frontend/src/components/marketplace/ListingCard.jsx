@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Phone, Tractor } from 'lucide-react';
 import { IMAGE_BASE_URL } from '../../services/api';
 
-const ListingCard = ({ listing }) => {
+const ListingCard = ({ listing, isOwner, onDelete }) => {
   const image = listing.images?.[0] ? `${IMAGE_BASE_URL}${listing.images[0]}` : null;
 
   return (
@@ -34,19 +34,30 @@ const ListingCard = ({ listing }) => {
         </p>
         <p className="text-sm text-gray-600">Owner: {listing.owner?.name || '—'}</p>
 
-        <div className="flex gap-2 pt-2">
-          <a href={`tel:${listing.contactNumber}`} className="btn-secondary flex-1 !py-2 text-sm">
-            <Phone className="w-4 h-4" /> Call
-          </a>
-          {listing.whatsappNumber && (
-            <a
-              href={`https://wa.me/${listing.whatsappNumber.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-primary flex-1 !py-2 text-sm !bg-green-600 hover:!bg-green-700"
-            >
-              WhatsApp
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex gap-2">
+            <a href={`tel:${listing.contactNumber}`} className="btn-secondary flex-1 !py-2 text-sm">
+              <Phone className="w-4 h-4" /> Call
             </a>
+            {listing.whatsappNumber && (
+              <a
+                href={`https://wa.me/${listing.whatsappNumber.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-primary flex-1 !py-2 text-sm !bg-green-600 hover:!bg-green-700"
+              >
+                WhatsApp
+              </a>
+            )}
+          </div>
+          {isOwner && onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(listing._id)}
+              className="btn-secondary !py-2 text-sm !text-red-600 !border-red-200 hover:!bg-red-50"
+            >
+              Delete Listing
+            </button>
           )}
         </div>
       </div>
