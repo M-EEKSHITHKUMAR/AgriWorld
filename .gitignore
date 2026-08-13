@@ -5,3 +5,12 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 *.log
 .DS_Store
+Plant_Disease_RAG_Pipeline.ipynb
+pip_dependecies.txt
+class_names.json
+agriworld_disease_model.h5
+.venv
+__pycache__
+.env
+pip_dependencies.txt
+Dataset

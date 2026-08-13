@@ -1,0 +1,15 @@
+streamlit
+tensorflow
+opencv-python
+numpy
+pillow
+scikit-learn
+matplotlib
+seaborn
+langchain
+langchain-google-genai
+langchain-community
+faiss-cpu
+flask
+flask-cors
+python-dotenv
