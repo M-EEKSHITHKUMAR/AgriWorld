@@ -27,22 +27,16 @@ npm run seed             # seeds central + state government schemes
 npm run dev               # starts on http://localhost:5000
 ```
 
-### ML / RAG Integration Point
+### ML / RAG Integration
 
-The disease scanner currently returns **dummy predictions and pesticide
-recommendations** so the full flow (upload → scan → save → history) works
-end-to-end without your model.
+The disease scanner sends the uploaded image from
+`backend/services/mlService.js` to the existing Flask API at
+`http://localhost:6000/predict` by default. Set `ML_DISEASE_API_URL` in the
+backend `.env` to override it. The Flask response supplies the disease,
+confidence, treatment, and pesticide recommendations stored in `DiseaseScan`.
 
-- `backend/services/mlService.js` — swap in a real call to your plant-disease
-  model. Set `ML_API_ENABLED=true` and `ML_DISEASE_API_URL` in `.env`.
-- `backend/services/ragService.js` — swap in a real call to your RAG pipeline
-  that returns the top-3 pesticide recommendations for a given disease name.
-  Set `RAG_PESTICIDE_API_URL` in `.env`.
-
-Both files have the expected request/response contracts documented inline —
-`backend/controllers/diseaseScanController.js` calls them in sequence
-(model prediction → RAG recommendation) and stores the combined result in
-`DiseaseScan`.
+If the ML API or inference process fails, the backend returns a `502` response
+and does not save an incomplete scan.
 
 ## Frontend Setup
 

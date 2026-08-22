@@ -1,7 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
+const fs = require('fs/promises');
 const DiseaseScan = require('../models/DiseaseScan');
 const mlService = require('../services/mlService');
-const ragService = require('../services/ragService');
 
 // @route POST /api/disease-scan
 const scanDisease = asyncHandler(async (req, res) => {
@@ -12,20 +12,23 @@ const scanDisease = asyncHandler(async (req, res) => {
 
   const imagePath = `/uploads/${req.file.filename}`;
 
-  // Step 1: call the ML model for disease prediction
-  const prediction = await mlService.predictDisease(req.file.path);
-
-  // Step 2: call the RAG pipeline for treatment + top pesticide recommendations
-  const recommendations = await ragService.getRecommendations(prediction.disease);
+  let prediction;
+  try {
+    prediction = await mlService.predictDisease(req.file.path);
+  } catch (error) {
+    await fs.unlink(req.file.path).catch(() => {});
+    res.status(502);
+    throw new Error(error.message || 'Disease detection service is unavailable');
+  }
 
   const scan = await DiseaseScan.create({
     user: req.user._id,
     image: imagePath,
     disease: prediction.disease,
     confidence: prediction.confidence,
-    treatment: recommendations.treatment,
-    preventiveMeasures: recommendations.preventiveMeasures,
-    pesticideRecommendations: recommendations.pesticides,
+    treatment: prediction.treatment,
+    preventiveMeasures: prediction.preventiveMeasures,
+    pesticideRecommendations: prediction.pesticides,
   });
 
   res.status(201).json({ success: true, scan });

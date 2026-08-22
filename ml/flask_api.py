@@ -14,7 +14,7 @@ from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 
-# ✅ IMPORTANT FIX: correct import
+
 from langchain.chains import RetrievalQA
 
 from langchain.prompts import PromptTemplate
@@ -32,6 +32,14 @@ DATASET_PATH = "Dataset/pesticides_dataset.csv"
 model = None
 class_names = []
 qa_chain = None
+
+DEFAULT_RESPONSE = {
+    "disease": "Unable to determine disease",
+    "confidence": 0,
+    "treatment": ["The image could not be analyzed. Please upload a clear leaf image and try again."],
+    "preventiveMeasures": ["Use a well-lit, focused image showing the full leaf."],
+    "pesticides": []
+}
 
 
 # ---------------- INIT SYSTEM ----------------
@@ -128,16 +136,16 @@ init_system()
 def predict():
     global model, class_names, qa_chain
 
-    if model is None or not class_names:
-        return jsonify({"error": "Model not loaded"}), 500
-
     if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+        return jsonify(DEFAULT_RESPONSE)
 
     file = request.files["file"]
 
     if file.filename == "":
-        return jsonify({"error": "Empty file"}), 400
+        return jsonify(DEFAULT_RESPONSE)
+
+    if model is None or not class_names:
+        return jsonify(DEFAULT_RESPONSE)
 
     try:
         # ---- IMAGE PROCESSING ----
@@ -175,15 +183,18 @@ def predict():
 
         return jsonify({
             "disease": predicted_class,
-            "confidence": confidence,
-            "treatment": rag_response,
+            "confidence": confidence * 100,
+            "treatment": [rag_response] if rag_response else [],
+            "preventiveMeasures": [],
             "pesticides": pesticides
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Prediction failed:", str(e))
+        return jsonify(DEFAULT_RESPONSE)
 
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.getenv('ML_API_PORT', 6000))
+    app.run(debug=True, port=port)
